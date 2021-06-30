@@ -21,16 +21,16 @@ from feature_definition import driver_hourly_stats_view, driver
 
 entity_df = pd.DataFrame(
     [
-        {"datetime": Timestamp("2021-06-11 07:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 08:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 09:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 10:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 11:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 12:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 13:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 14:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 15:00:00"), "driver_id": 1005},
-        {"datetime": Timestamp("2021-06-11 16:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-11 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-12 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-13 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-14 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-15 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-16 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-17 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-18 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-19 00:00:00"), "driver_id": 1005},
+        {"datetime": Timestamp("2021-06-20 00:00:00"), "driver_id": 1005},
     ]
 )
 
