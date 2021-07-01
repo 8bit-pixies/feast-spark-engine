@@ -41,7 +41,7 @@ config = load_repo_config(Path("."))
 config.offline_store = FileOfflineStore()
 
 store = FeatureStore(config=config)
-store.apply([driver_hourly_stats_view, driver])
+# store.apply([driver_hourly_stats_view, driver])
 
 training_df = store.get_historical_features(
     entity_df=entity_df,
