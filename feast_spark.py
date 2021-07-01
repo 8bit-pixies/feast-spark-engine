@@ -32,18 +32,20 @@ import databricks.koalas as ks
 import pyspark
 from pyspark.sql.dataframe import DataFrame as SparkDataFrame
 from pyspark.sql import SparkSession
+
 # spark = SparkSession.builder.getOrCreate()
 
 
 EVENT_TIMESTAMP_ALIAS = "event_timestamp"
 CREATED_TIMESTAMP_ALIAS = "created_timestamp"
 
+
 def as_of_join(
     entity_df: DataFrame,
     entity_event_timestamp_column: str,
     feature_table_df: DataFrame,
     feature_table: FeatureView,
-    feature_columns: List[str]
+    feature_columns: List[str],
 ) -> DataFrame:
     """Perform an as of join between entity and feature table, given a maximum age tolerance.
     Join conditions:
@@ -116,7 +118,6 @@ def as_of_join(
     """
     entity_with_id = entity_df.withColumn("_row_nr", monotonically_increasing_id())
 
-
     event_timestamp_alias = feature_table.input.event_timestamp_column
     created_timestamp_alias = feature_table.input.created_timestamp_column
 
@@ -168,9 +169,9 @@ def as_of_join(
     ).filter(col("_rank") == 1)
 
     return filter_most_recent_feature_timestamp.select(
-        entity_df.columns
-        + feature_columns
+        entity_df.columns + feature_columns
     )
+
 
 def _map_column(df: SparkDataFrame, col_mapping: Dict[str, str]):
     source_to_alias_map = {v: k for k, v in col_mapping.items()}
@@ -180,6 +181,7 @@ def _map_column(df: SparkDataFrame, col_mapping: Dict[str, str]):
         for col_name in df.columns
     ]
     return df.select(projection)
+
 
 def _filter_feature_table_by_time_range(
     feature_table_df: SparkDataFrame,
@@ -207,6 +209,7 @@ def _filter_feature_table_by_time_range(
     time_range_filtered_df = feature_table_df.filter(feature_table_timestamp_filter)
 
     return time_range_filtered_df
+
 
 def join_entity_to_feature_tables(
     entity_df: SparkDataFrame,
@@ -272,16 +275,21 @@ def join_entity_to_feature_tables(
     """
     joined_df = entity_df
 
-    for (feature_table_df, feature_table,) in zip(feature_table_dfs, feature_tables):
+    for (
+        feature_table_df,
+        feature_table,
+    ) in zip(feature_table_dfs, feature_tables):
         joined_df = as_of_join(
-            joined_df, entity_event_timestamp_column, feature_table_df, feature_table,
+            joined_df,
+            entity_event_timestamp_column,
+            feature_table_df,
+            feature_table,
         )
     return joined_df
 
 
-
 class FileOfflineStoreConfig(FeastConfigBaseModel):
-    """ Offline store config for local (file-based) store """
+    """Offline store config for local (file-based) store"""
 
     type: Literal["file"] = "file"
     """ Offline store type selector"""
@@ -316,12 +324,16 @@ class FileOfflineStore(OfflineStore):
         project: str,
     ) -> RetrievalJob:
         spark = SparkSession.builder.getOrCreate()
-        
-        if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, ks.DataFrame) or isinstance(entity_df, SparkDataFrame)):
+
+        if not (
+            isinstance(entity_df, pd.DataFrame)
+            or isinstance(entity_df, ks.DataFrame)
+            or isinstance(entity_df, SparkDataFrame)
+        ):
             raise ValueError(
                 f"Please provide an entity_df of type {type(pd.DataFrame)} instead of type {type(entity_df)}"
             )
-        
+
         # force it to be a SparkDataFrame
         if isinstance(entity_df, pd.DataFrame):
             entity_df = ks.from_pandas(entity_df)
@@ -330,9 +342,11 @@ class FileOfflineStore(OfflineStore):
 
         entity_df_event_timestamp_col = DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL  # local modifiable copy of global variable
         if entity_df_event_timestamp_col not in entity_df.columns:
-            datetime_columns = ks.DataFrame(entity_df).select_dtypes(
-                include=["datetime", "datetimetz", "timestamp"]
-            ).columns
+            datetime_columns = (
+                ks.DataFrame(entity_df)
+                .select_dtypes(include=["datetime", "datetimetz", "timestamp"])
+                .columns
+            )
             if len(datetime_columns) == 1:
                 print(
                     f"Using {datetime_columns[0]} as the event timestamp. To specify a column explicitly, please name it {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL}."
@@ -362,14 +376,13 @@ class FileOfflineStore(OfflineStore):
                     spark.read.parquet(feature_view.input.path),
                     feature_view,
                     entity_df,
-                    entity_df_event_timestamp_col
+                    entity_df_event_timestamp_col,
                 )
 
                 # Rename columns by the field mapping dictionary if it exists
                 if feature_view.input.field_mapping is not None:
                     not NotImplementedError
                     # table = _run_field_mapping(table, feature_view.input.field_mapping)
-
 
                 # Build a list of all the features we should select from this source
                 feature_names = []
@@ -403,16 +416,18 @@ class FileOfflineStore(OfflineStore):
                 df_to_join = df_to_join.select(right_entity_key_columns + features)
 
                 entity_df_with_features = as_of_join(
-                    entity_df_with_features, 
+                    entity_df_with_features,
                     entity_df_event_timestamp_col,
                     df_to_join,
                     feature_view,
-                    feature_names
+                    feature_names,
                 )
 
                 # Remove right (feature table/view) event_timestamp column.
                 if event_timestamp_column != entity_df_event_timestamp_col:
-                    entity_df_with_features = entity_df_with_features.drop(event_timestamp_column)
+                    entity_df_with_features = entity_df_with_features.drop(
+                        event_timestamp_column
+                    )
 
                 # Ensure that we delete dataframes to free up memory
                 # del df_to_join

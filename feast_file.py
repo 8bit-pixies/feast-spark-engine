@@ -20,7 +20,7 @@ from feast.repo_config import FeastConfigBaseModel, RepoConfig
 
 
 class FileOfflineStoreConfig(FeastConfigBaseModel):
-    """ Offline store config for local (file-based) store """
+    """Offline store config for local (file-based) store"""
 
     type: Literal["file"] = "file"
     """ Offline store type selector"""
@@ -145,7 +145,8 @@ class FileOfflineStore(OfflineStore):
 
                     # Ensure that the source dataframe feature column includes the feature view name as a prefix
                     df_to_join.rename(
-                        columns={feature: prefixed_feature_name}, inplace=True,
+                        columns={feature: prefixed_feature_name},
+                        inplace=True,
                     )
 
                 # Build a list of entity columns to join on (from the right table)

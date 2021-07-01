@@ -52,4 +52,4 @@ training_df = store.get_historical_features(
     ],
 )
 
-print(ks.DataFrame(training_df.to_df()).sort_values('datetime'))
+print(ks.DataFrame(training_df.to_df()).sort_values("datetime"))
