@@ -1,6 +1,0 @@
-project: fs2
-registry: feature_store/data/registry.db
-provider: local
-online_store:
-    path:  feature_store/data/online_store.db
-
