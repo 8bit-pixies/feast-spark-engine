@@ -29,7 +29,10 @@ def test_end_to_end():
     feature_df = fs.get_historical_features(
         features=["driver_hourly_stats:conv_rate"],
         entity_df=pd.DataFrame(
-            [{"driver_id": 1001, "event_timestamp": datetime.now()}]
+            {
+                "driver_id": [1001, 1002],
+                "event_timestamp": [datetime.now(), datetime.now()],
+            }
         ),
     )
 
