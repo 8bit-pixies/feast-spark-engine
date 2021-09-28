@@ -1,4 +1,8 @@
+_In practise you wouldn't use a Feast Provider. This is a quick "hack" to show this is possible. Don't use this repo in prod..._
+
+
 # Feast Custom Provider
+
 [![test-provider](https://github.com/feast-dev/feast-custom-provider-demo/actions/workflows/test_provider.yml/badge.svg?branch=master)](https://github.com/feast-dev/feast-custom-provider-demo/actions/workflows/test_provider.yml)
 
 ### Overview

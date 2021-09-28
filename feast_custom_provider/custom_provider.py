@@ -15,6 +15,7 @@ from feast.infra.offline_stores.offline_utils import (
 )
 
 # deprecate this
+from feast import OnDemandFeatureView
 from feast.infra.provider import _get_requested_feature_views_to_features_dict
 from feast.protos.feast.types.EntityKey_pb2 import EntityKey as EntityKeyProto
 from feast.protos.feast.types.Value_pb2 import Value as ValueProto
@@ -264,33 +265,54 @@ def join_entity_to_feature_tables(
     """
     joined_df = entity_df
 
-    for (feature_table_df, feature_table,) in zip(feature_table_dfs, feature_tables):
+    for (
+        feature_table_df,
+        feature_table,
+    ) in zip(feature_table_dfs, feature_tables):
         joined_df = as_of_join(
-            joined_df, entity_event_timestamp_column, feature_table_df, feature_table,
+            joined_df,
+            entity_event_timestamp_column,
+            feature_table_df,
+            feature_table,
         )
     return joined_df
 
 
 class FileRetrievalJob(RetrievalJob):
-    def __init__(self, evaluation_function: Callable):
+    def __init__(
+        self,
+        evaluation_function: Callable,
+        full_feature_names: bool = False,
+        on_demand_feature_views=[],
+    ):
         """Initialize a lazy historical retrieval job"""
 
         # The evaluation function executes a stored procedure to compute a historical retrieval.
         self.evaluation_function = evaluation_function
+        self._full_feature_names = full_feature_names
+        self._on_demand_feature_views = on_demand_feature_views
 
-    def to_df(self):
+    @property
+    def full_feature_names(self):
+        return self._full_feature_names
+
+    @property
+    def on_demand_feature_views(self):
+        return self._on_demand_feature_views
+
+    def _to_df_internal(self):
         # Only execute the evaluation function to build the final historical retrieval dataframe at the last moment.
         df = self.evaluation_function()
         return df
 
-    def to_arrow(self):
+    def _to_arrow_internal(self):
         # Only execute the evaluation function to build the final historical retrieval dataframe at the last moment.
         df = self.evaluation_function().toPandas()
         return pyarrow.Table.from_pandas(df)
 
 
 class MyCustomProvider(LocalProvider):
-    def __init__(self, config: RepoConfig, repo_path):
+    def __init__(self, config: RepoConfig, repo_path=None):
         super().__init__(config)
         # Add your custom init code here. This code runs on every feast operation.
 
@@ -411,8 +433,13 @@ class MyCustomProvider(LocalProvider):
                     f"Please provide an entity_df with a column named {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL} representing the time of events."
                 )
 
-        feature_views_to_features = _get_requested_feature_views_to_features_dict(
-            feature_refs, feature_views
+        (
+            feature_views_to_features,
+            on_demand_feature_views_to_features,
+        ) = _get_requested_feature_views_to_features_dict(
+            feature_refs,
+            feature_views,
+            registry.list_on_demand_feature_views(config.project),
         )
 
         # Create lazy function that is only called from the RetrievalJob object
@@ -495,7 +522,13 @@ class MyCustomProvider(LocalProvider):
 
             return entity_df_with_features
 
-        job = FileRetrievalJob(evaluation_function=evaluate_historical_retrieval)
+        job = FileRetrievalJob(
+            evaluation_function=evaluate_historical_retrieval,
+            full_feature_names=full_feature_names,
+            on_demand_feature_views=OnDemandFeatureView.get_requested_odfvs(
+                feature_refs, project, registry
+            ),
+        )
         return job
 
         # return super().get_historical_features(
